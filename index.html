@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>6단 곱셈</title>
+    <title>6단 곱셈 (주관식)</title>
     <style>
         body {
             font-family: 'Nanum Gothic', sans-serif;
@@ -64,11 +64,6 @@
             margin-bottom: 20px;
             font-size: 1.2em;
         }
-        #answer-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
         .hidden {
             display: none;
         }
@@ -81,12 +76,22 @@
             white-space: pre-wrap;
             text-align: left;
         }
+        #answer-container {
+            margin-bottom: 20px;
+        }
+        #user-answer {
+            width: 100px;
+            font-size: 1.1em;
+            padding: 5px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <h1>6단 곱셈</h1>
+        <h1>6단 곱셈 (주관식)</h1>
         
+        <!-- 시작 화면 -->
         <div id="start-screen">
             <h2>이름과 난이도를 선택하세요</h2>
             <input type="text" id="player-name" placeholder="이름 입력" style="padding:10px; font-size:16px;">
@@ -97,20 +102,23 @@
             <button onclick="startGame('easy')">하</button>
         </div>
 
+        <!-- 게임 화면 -->
         <div id="game-screen" class="hidden">
             <div id="energy-bar"><div id="energy-fill"></div></div>
             <div id="question"></div>
-            <div id="answer-buttons">
-                <button onclick="checkAnswer(0)"></button>
-                <button onclick="checkAnswer(1)"></button>
-                <button onclick="checkAnswer(2)"></button>
-                <button onclick="checkAnswer(3)"></button>
+            
+            <div id="answer-container">
+                <!-- 주관식 정답 입력 부분 -->
+                <input type="number" id="user-answer" placeholder="답 입력" />
+                <button onclick="checkAnswer()">제출</button>
             </div>
+            
             <div id="score">점수: 0</div>
             <div id="chances">남은 기회: 3</div>
             <div id="total-time">총 게임 시간: 00:00</div>
         </div>
 
+        <!-- 결과 화면 -->
         <div id="result-screen" class="hidden">
             <h2>게임 종료!</h2>
             <div id="final-score"></div>
@@ -181,20 +189,9 @@
             [currentQuestion, currentAnswer] = generateMultiplication();
 
             document.getElementById('question').textContent = `${currentQuestion} = ?`;
-
-            let answerOptions = [currentAnswer];
-            while (answerOptions.length < 4) {
-                let wrongAnswer = Math.floor(Math.random() * 54) + 1; // 6x9=54
-                if (!answerOptions.includes(wrongAnswer)) {
-                    answerOptions.push(wrongAnswer);
-                }
-            }
-            answerOptions = answerOptions.sort(() => Math.random() - 0.5);
-
-            let buttons = document.getElementById('answer-buttons').getElementsByTagName('button');
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].textContent = answerOptions[i];
-            }
+            
+            // 이전 문제 입력값 초기화
+            document.getElementById('user-answer').value = '';
 
             startEnergyBar();
         }
@@ -225,10 +222,19 @@
             }, 100);
         }
 
-        function checkAnswer(index) {
+        function checkAnswer() {
             clearInterval(energyInterval);
-            let selectedAnswer = parseInt(document.getElementById('answer-buttons').getElementsByTagName('button')[index].textContent);
-            if (selectedAnswer === currentAnswer) {
+            let userInput = document.getElementById('user-answer').value.trim();
+            
+            // 입력값이 없거나 숫자가 아니면 그냥 리턴(혹은 안내)
+            if (!userInput) {
+                alert("답을 입력해주세요.");
+                startEnergyBar(); // 다시 시간을 이어서 진행할지, 그대로 chance를 깎을지는 취향에 따라 조절
+                return;
+            }
+
+            let userAnswer = parseInt(userInput, 10);
+            if (userAnswer === currentAnswer) {
                 score += difficulties[currentDifficulty].points;
                 updateScore();
                 nextQuestion();
@@ -239,6 +245,7 @@
                     alert(`틀렸습니다. 정답은 ${currentAnswer}입니다.`);
                     nextQuestion();
                 } else {
+                    alert(`틀렸습니다. 정답은 ${currentAnswer}입니다.`);
                     endGame();
                 }
             }
@@ -289,7 +296,7 @@
             const [mm, ss] = finalTimeText.split(':');
             const elapsedTimeInSeconds = parseInt(mm, 10) * 60 + parseInt(ss, 10);
 
-            saveData("6단 곱셈", playerName, score, elapsedTimeInSeconds);
+            saveData("6단 곱셈 (주관식)", playerName, score, elapsedTimeInSeconds);
         }
 
         async function saveData(game, name, score, elapsedTime) {
